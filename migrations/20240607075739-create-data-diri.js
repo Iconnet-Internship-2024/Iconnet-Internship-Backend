@@ -46,11 +46,11 @@ module.exports = {
         allowNull: false
       },
       agama: {
-        type: Sequelize.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha', 'Lainnya'),
+        type: Sequelize.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Lainnya'),
         allowNull: false
       },
       tingkat_pendidikan: {
-        type: Sequelize.ENUM('D2', 'D3', 'D4', 'S1', 'S2', 'S3'),
+        type: Sequelize.ENUM('SMA', 'SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3'),
         allowNull: false
       },
       nomor_induk: {

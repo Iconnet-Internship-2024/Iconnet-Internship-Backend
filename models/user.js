@@ -14,6 +14,19 @@ module.exports = (sequelize, DataTypes) => {
       User.hasOne(models.data_diri, { foreignKey: 'user_id', as: 'data_diri' });
       User.hasMany(models.pengajuan, { foreignKey: 'user_id', as: 'pengajuan' });
       User.hasMany(models.riwayat_log, { foreignKey: 'user_id', as: 'riwayat_logs' });
+
+      this.hasOne(models.data_diri, {
+        foreignKey: 'user_id',
+      });
+      this.hasOne(models.admin, {
+        foreignKey: 'user_id',
+      });
+      this.hasOne(models.pengajuan, {
+        foreignKey: 'user_id',
+      });
+      this.hasMany(models.riwayat_log, {
+        foreignKey: 'user_id',
+      });
     }
   }
   User.init({
@@ -31,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'User',
+    tableName: 'users'
   });
   return User;
 };

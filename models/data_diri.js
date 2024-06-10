@@ -42,7 +42,8 @@ module.exports = (sequelize, DataTypes) => {
     fakultas: DataTypes.STRING
   }, {
     sequelize,
-    modelName: 'data_diri'
+    modelName: 'data_diri',
+    tableName: 'data_diri'
   });
   return data_diri;
 };
