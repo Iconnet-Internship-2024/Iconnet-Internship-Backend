@@ -1,15 +1,17 @@
 const express = require('express');
 const app = express();
-const userRoutes = require('./routes/user');
+const routes = require('./routes/index');
 
-// Middleware untuk parsing body dari request
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Use the user routes
-app.use('/users', userRoutes);
+app.use('/', routes);
 
-// Start server
+app.get("/", (req, res) => {
+  res.send("Hello World!")
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

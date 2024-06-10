@@ -48,6 +48,7 @@ module.exports = (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'data_diri',
+    tableName: 'data_diri'
   });
   return data_diri;
 };
