@@ -10,7 +10,10 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      // define association here
+      User.hasOne(models.admin, { foreignKey: 'user_id', as: 'admin' });
+      User.hasOne(models.data_diri, { foreignKey: 'user_id', as: 'data_diri' });
+      User.hasMany(models.pengajuan, { foreignKey: 'user_id', as: 'pengajuan' });
+      User.hasMany(models.riwayat_log, { foreignKey: 'user_id', as: 'riwayat_logs' });
     }
   }
   User.init({
@@ -22,7 +25,7 @@ module.exports = (sequelize, DataTypes) => {
     password: DataTypes.STRING,
     role: {
       type: DataTypes.ENUM('admin','user'),
-      defaulValue: 'user',
+      defaultValue: 'user',
       allowNull:false
     }
   }, {
