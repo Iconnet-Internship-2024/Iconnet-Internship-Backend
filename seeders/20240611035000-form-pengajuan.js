@@ -33,7 +33,7 @@ module.exports = {
           updatedAt: new Date(),
         },
         {
-          user_id: 3,
+          user_id: 1,
           divisi: "Administrasi",
           from: new Date("2024-07-01"),
           to: new Date("2024-08-01"),

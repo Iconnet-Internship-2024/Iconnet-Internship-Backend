@@ -10,7 +10,9 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      data_diri.belongsTo(models.User, { foreignKey: 'user_id', as : 'users' });
+      this.belongsTo(models.User, {
+        foreignKey: 'user_id'
+      })
     }
   }
   data_diri.init({
@@ -31,10 +33,10 @@ module.exports = (sequelize, DataTypes) => {
     domisili: DataTypes.TEXT,
     alamat: DataTypes.TEXT,
     agama: { 
-      type: DataTypes.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha', 'Lainnya')
+      type: DataTypes.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Lainnya')
     },
     tingkat_pendidikan: { 
-      type: DataTypes.ENUM('D2', 'D3', 'D4', 'S1', 'S2', 'S3')
+      type: DataTypes.ENUM('SMA', 'SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3')
     },
     nomor_induk: DataTypes.INTEGER,
     intansi: DataTypes.STRING,

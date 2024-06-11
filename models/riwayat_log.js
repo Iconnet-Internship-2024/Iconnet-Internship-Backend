@@ -1,7 +1,5 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class riwayat_log extends Model {
     /**
@@ -10,25 +8,28 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      riwayat_log.belongsTo(models.User, { foreignKey: 'user_id', as : 'users' });
+      this.belongsTo(models.User, { foreignKey: "user_id" });
     }
   }
-  riwayat_log.init({
-    user_id: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'User',
-        key: 'id'
-      }
+  riwayat_log.init(
+    {
+      user_id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: "User",
+          key: "id",
+        },
+      },
+      admin_name: DataTypes.STRING,
+      judul: DataTypes.STRING,
+      deskripsi: DataTypes.TEXT,
+      status: DataTypes.STRING,
     },
-    admin_name: DataTypes.STRING,
-    judul: DataTypes.STRING,
-    deskripsi: DataTypes.TEXT,
-    status: DataTypes.STRING
-  }, {
-    sequelize,
-    modelName: 'riwayat_log',
-    tableName: 'riwayat_logs'
-  });
+    {
+      sequelize,
+      modelName: "riwayat_log",
+      tableName: "riwayat_logs",
+    }
+  );
   return riwayat_log;
 };
