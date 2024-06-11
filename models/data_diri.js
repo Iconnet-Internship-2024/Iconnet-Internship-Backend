@@ -33,13 +33,13 @@ module.exports = (sequelize, DataTypes) => {
     domisili: DataTypes.TEXT,
     alamat: DataTypes.TEXT,
     agama: { 
-      type: DataTypes.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha', 'Lainnya')
+      type: DataTypes.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Lainnya')
     },
     kategori: { 
       type: DataTypes.ENUM('Pelajar', 'Mahasiswa')
     },
     tingkat_pendidikan: { 
-      type: DataTypes.ENUM('D2', 'D3', 'D4', 'S1', 'S2', 'S3')
+      type: DataTypes.ENUM('SMA', 'SMK', 'D1', 'D2', 'D3', 'D4', 'S1', 'S2', 'S3')
     },
     nomor_induk: DataTypes.INTEGER,
     intansi: DataTypes.STRING,

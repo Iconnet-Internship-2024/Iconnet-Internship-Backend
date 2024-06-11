@@ -13,7 +13,6 @@ module.exports = (sequelize, DataTypes) => {
       this.belongsTo(models.User, {
         foreignKey: 'user_id'
       })
-      // define association here
     }
   }
   admin.init({
