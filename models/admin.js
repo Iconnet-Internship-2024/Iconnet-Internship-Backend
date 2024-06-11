@@ -9,8 +9,8 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       this.belongsTo(models.User, {
-        foreignKey: "user_id",
-      });
+        foreignKey: 'user_id'
+      })
     }
   }
   admin.init(
