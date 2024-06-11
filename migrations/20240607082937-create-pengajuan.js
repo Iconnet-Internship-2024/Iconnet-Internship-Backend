@@ -10,7 +10,15 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       user_id: {
+        allowNull: false,
         type: Sequelize.INTEGER,
+        references : {
+          model: 'users',
+          key : 'id'
+        }
+      },
+      kategori: {
+        type: Sequelize.ENUM('Pelajar', 'Mahasiswa'),
         allowNull: false
       },
       divisi: {

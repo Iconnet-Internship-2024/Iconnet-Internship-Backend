@@ -10,8 +10,12 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       user_id: {
+        allowNull: false,
         type: Sequelize.INTEGER,
-        allowNull: false
+        references : {
+          model: 'users',
+          key : 'id'
+        }
       },
       nama: {
         type: Sequelize.STRING,
@@ -43,10 +47,6 @@ module.exports = {
       },
       agama: {
         type: Sequelize.ENUM('Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Lainnya'),
-        allowNull: false
-      },
-      kategori: {
-        type: Sequelize.ENUM('Pelajar', 'Mahasiswa'),
         allowNull: false
       },
       tingkat_pendidikan: {

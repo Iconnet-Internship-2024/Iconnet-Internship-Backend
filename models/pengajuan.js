@@ -10,9 +10,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      this.belongsTo(models.User, {
-        foreignKey: 'user_id'
-      })
+      pengajuan.belongsTo(models.User, { foreignKey: 'user_id', as : 'users' });
     }
   }
   pengajuan.init({
@@ -22,6 +20,9 @@ module.exports = (sequelize, DataTypes) => {
         model: 'User',
         key: 'id'
       }
+    },
+    kategori: { 
+      type: DataTypes.ENUM('Pelajar', 'Mahasiswa')
     },
     divisi:  { 
       type: DataTypes.ENUM('Administrasi', 'Teknisi')
