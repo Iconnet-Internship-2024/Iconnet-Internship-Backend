@@ -21,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
       this.hasOne(models.admin, {
         foreignKey: 'user_id',
       });
-      this.hasOne(models.pengajuan, {
+      this.hasMany(models.pengajuan, {
         foreignKey: 'user_id',
       });
       this.hasMany(models.riwayat_log, {
