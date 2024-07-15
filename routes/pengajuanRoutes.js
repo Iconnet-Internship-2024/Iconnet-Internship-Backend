@@ -1,7 +1,9 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const pengajuanController = require('../controllers/pengajuanController');
+const pengajuanController = require("../controllers/pengajuanController");
+const { authenticate } = require("../middleware/authMiddleware");
 
-router.get('/', pengajuanController.getAllPengajuan);
+router.get("/", authenticate, pengajuanController.getAllPengajuan);
+// router.get('/', pengajuanController.getAllPengajuan);
 
 module.exports = router;
