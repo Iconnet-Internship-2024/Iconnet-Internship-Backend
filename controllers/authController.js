@@ -31,28 +31,12 @@ module.exports = {
         });
       }
 
-      // const passwordRegex =
-      //   /^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
-      // if (!passwordRegex.test(password)) {
-      //   return res.status(403).json({
-      //     message:
-      //       "Password harus mengandung setidaknya satu huruf, satu angka, dan satu simbol",
-      //   });
-      // }
-
       const passwordRegex = /^.{8,}$/;
       if (!passwordRegex.test(password)) {
         return res.status(400).json({
           message: "Password must be at least 8 characters long",
         });
       }
-
-      // const minPasswordLength = 8;
-      // if (password.length < minPasswordLength) {
-      //   return res.status(403).json({
-      //     message: `Password harus memiliki minimal ${minPasswordLength} karakter`,
-      //   });
-      // }
 
       if (password !== confirmPass) {
         return res.status(400).json({ message: "Passwords do not match" });
@@ -67,7 +51,6 @@ module.exports = {
         password: hashPass,
         role: "user",
       });
-
       if (registerAcc) {
         return res
           .status(201)
@@ -94,19 +77,11 @@ module.exports = {
         return res.status(400).json({ message: "Invalid username/email" });
       }
 
-      const validPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user.password);
 
-      if (!validPassword) {
+      if (!isValidPassword) {
         return res.status(400).json({ message: "Invalid password" });
       }
-
-      // Log informasi pengguna sebelum membuat token
-      // console.log("User info before creating token:", {
-      //   userId: user.id,
-      //   username: user.username,
-      //   email: user.email,
-      //   role: user.role,
-      // });
 
       const payload = {
         userId: user.id,
@@ -134,43 +109,10 @@ module.exports = {
     res.status(200).json({ message: "Successful logout" });
   },
 
-  testEmail: async (req, res) => {
-    const email = "nafshadia@gmail.com";
-    const mailOptions = {
-      // from: process.env.MAILTRAP_USER,
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Test Email",
-      text: `Welcome!
-      
-      Thank you for using Nodemailer!
-      
-      Best regards,
-      Team`,
-      html: `<b>Welcome <strong>${email}</strong>!</b>
-            <br>
-            <p>Thank you for your attention</p>
-            <br>
-            <p>Best regards,<br>Team</p>`,
-    };
-
+  forgotPassword: async (req, res) => {
     try {
-      const sendEmail = await transporter.sendMail(mailOptions);
-      console.log("Mail sent: ", sendEmail);
-      if (sendEmail) {
-        return res.status(200).json({ message: "Successfully sent email" });
-      }
-    } catch (error) {
-      console.error("Error sending email:", error);
-      return res
-        .status(500)
-        .json({ message: "Failed to send email", error: error.message });
-    }
-  },
-
-  forgetPassword: async (req, res) => {
-    try {
-      const user = await User.findOne({ where: { mail: req.body.email } });
+      const { email } = req.body;
+      const user = await User.findOne({ where: { email: email } });
 
       if (!user) {
         return res.status(404).send({ message: "User not found" });
@@ -180,36 +122,36 @@ module.exports = {
         expiresIn: "10m",
       });
 
+      // Isi resetPassURL dengan URL yang menuju ke halaman reset password
+      const resetPassUrl = `http://localhost:3000/auth/reset-password/${token}`;
       const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: req.body.email,
+        to: email,
         subject: "Reset Password",
         html: `<h1>Reset Your Password</h1>
       <p>Click on the following link to reset your password:</p>
-      <a href="http://localhost:3000/auth/reset-password/${token}">Reset Password</a>
+      <a href="${resetPassUrl}">Reset Password</a>
       <p>The link will expire in 10 minutes.</p>
       <p>If you didn't request a password reset, please ignore this email.</p>`,
       };
 
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          return res.status(500).send({ message: err.message });
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          return res.status(500).send({ message: error.message });
         }
         res.status(200).send({ message: "Email sent" });
       });
-    } catch (err) {
-      res.status(500).send({ message: err.message });
+    } catch (error) {
+      res.status(500).send({ message: error.message });
     }
   },
 
   resetPassword: async (req, res) => {
     try {
-      const token = req.params.token;
+      const { token } = req.params;
       const { newPassword } = req.body;
 
       const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-      // console.log("Decoded token:", decodedToken);
 
       if (!decodedToken) {
         return res.status(401).send({ message: "Invalid token" });
@@ -217,36 +159,61 @@ module.exports = {
 
       const user = await User.findOne({ where: { id: decodedToken.userId } });
 
-      // console.log("Data user: ", user);
-
       if (!user) {
-        return res.status(401).send({ message: "no user found" });
+        return res.status(401).send({ message: "User not found" });
       }
 
       const passwordRegex = /^.{8,}$/;
       if (!passwordRegex.test(newPassword)) {
         return res.status(403).json({
-          message: "Password harus minimal 8 karakter",
+          message: "Password must be at least 8 characters long",
         });
       }
 
       const salt = await bcrypt.genSalt();
       const newHashPass = await bcrypt.hash(newPassword, salt);
 
-      // console.log("New hashed password:", newHashPass);
-
-      const updateNewPass = await User.update(
+      const newPass = await User.update(
         { password: newHashPass },
         { where: { id: user.id } }
       );
 
-      // console.log(updateNewPass);
+      const loginUrl = `http://localhost:3000/auth/login`;
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: "Password Reset Successful",
+        html: `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+            <h1 style="color: #4CAF50;">Password Reset Successful</h1>
+            <p>Dear User,</p>
+            <p>Your password has been successfully reset. You can now log in with your new password.</p>
+            <p>Please use the following link to log in:</p>
+            <a href="${loginUrl}" style="color: #4CAF50;">Log In</a>
+            <p>If you did not request this change or believe this was a mistake, please contact our support team immediately.</p>
+            <p>Best regards,</p>
+            <p>Your Company Team</p>
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
+            <p style="font-size: 0.9em; color: #888;">
+              If you did not request a password reset, please ignore this email or 
+              <a href="mailto:support@example.com" style="color: #4CAF50; text-decoration: none;">contact support</a> if you have any questions.
+            </p>
+          </div>
+        `,
+      };
 
-      if (updateNewPass) {
-        return res.status(200).send({ message: "Password updated" });
+      if (newPass) {
+        transporter.sendMail(mailOptions, (error, info) => {
+          if (error) {
+            return res.status(500).send({ message: error.message });
+          }
+          res.status(200).send({ message: "Reset password success. Email sent" });
+        });
+      } else {
+        res.status(400).send({ message: "New password not provided" });
       }
-    } catch (err) {
-      res.status(500).send({ message: err.message });
+    } catch (error) {
+      res.status(500).send({ message: error.message });
     }
   },
 };
