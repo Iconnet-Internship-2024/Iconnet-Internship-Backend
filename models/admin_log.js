@@ -1,35 +1,41 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class riwayat_log extends Model {
+  class admin_log extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      this.belongsTo(models.User, { foreignKey: "user_id" });
+      this.belongsTo(models.user, {
+        foreignKey: "user_id",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      });
     }
   }
-  riwayat_log.init(
+  admin_log.init(
     {
       user_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: "User",
+          model: "users",
           key: "id",
         },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+        unique: true,
       },
-      admin_name: DataTypes.STRING,
-      judul: DataTypes.STRING,
-      deskripsi: DataTypes.TEXT,
+      title: DataTypes.STRING,
+      description: DataTypes.TEXT,
       status: DataTypes.STRING,
+      action_type: DataTypes.STRING,
     },
     {
       sequelize,
-      modelName: "riwayat_log",
-      tableName: "riwayat_logs",
+      modelName: "admin_log",
     }
   );
-  return riwayat_log;
+  return admin_log;
 };

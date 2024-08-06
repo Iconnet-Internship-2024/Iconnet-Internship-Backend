@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class admin extends Model {
+  class reset_token extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  admin.init(
+  reset_token.init(
     {
       user_id: {
         type: DataTypes.INTEGER,
@@ -27,14 +27,13 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
         unique: true,
       },
-      name: DataTypes.STRING,
-      phone_number: DataTypes.STRING,
-      job_position: DataTypes.STRING,
+      token: DataTypes.STRING,
+      expires_at: DataTypes.DATE,
     },
     {
       sequelize,
-      modelName: "admin",
+      modelName: "reset_token",
     }
   );
-  return admin;
+  return reset_token;
 };
