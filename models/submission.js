@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      this.belongsTo(models.user, {
+      this.belongsTo(models.User, {
         foreignKey: "user_id",
         onDelete: "CASCADE",
         onUpdate: "CASCADE",
@@ -26,7 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       user_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: "users",
+          model: "Users",
           key: "id",
         },
         onDelete: "CASCADE",

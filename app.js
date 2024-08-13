@@ -5,6 +5,7 @@ const routes = require("./routes/index");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const morgan = require("morgan");
+const { testDBConnection } = require('./config/config');
 
 app.use(cors());
 app.use(cookieParser());
@@ -32,6 +33,8 @@ app.use(cors({
   },
   credentials: true,
 }));
+
+testDBConnection();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
+const authRoute = require('./authRoutes')
 const userRoute = require('./userRoutes')
-const adminRoute = require('./adminRoutes')
-const dataDiriRoute = require('./dataDiriRoutes')
-const pengajuanRoute = require('./pengajuanRoutes')
-const riwayatLogRoute = require('./riwayatLogRoutes')
+const roleRoute = require('./roleRoutes')
 
+router.use('/auth', authRoute);
 router.use('/user', userRoute);
-router.use('/admin', adminRoute);
-router.use('/data-diri', dataDiriRoute);
-router.use('/pengajuan', pengajuanRoute);
-router.use('/riwayat-log', riwayatLogRoute);
+router.use('/role', roleRoute);
 
 module.exports = router;
