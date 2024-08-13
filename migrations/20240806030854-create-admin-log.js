@@ -1,49 +1,46 @@
-'use strict';
+"use strict";
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('riwayat_log', {
+    await queryInterface.createTable("admin_logs", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
       },
       user_id: {
-        allowNull: false,
         type: Sequelize.INTEGER,
-        references : {
-          model: 'users',
-          key : 'id'
-        }
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       },
-      admin_name: {
+      title: {
         type: Sequelize.STRING,
-        allowNull: false
       },
-      judul: {
-        type: Sequelize.STRING,
-        allowNull: false
-      },
-      deskripsi: {
+      description: {
         type: Sequelize.TEXT,
-        allowNull: false
       },
       status: {
         type: Sequelize.STRING,
-        allowNull: false
+      },
+      action_type: {
+        type: Sequelize.STRING,
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE
+        type: Sequelize.DATE,
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE
-      }
+        type: Sequelize.DATE,
+      },
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('riwayat_log');
-  }
+    await queryInterface.dropTable("admin_logs");
+  },
 };

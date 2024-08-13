@@ -1,7 +1,5 @@
-'use strict';
-const {
-  Model
-} = require('sequelize');
+"use strict";
+const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     /**
@@ -10,36 +8,60 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      this.hasOne(models.data_diri, {
-        foreignKey: 'user_id',
+      this.belongsTo(models.role, {
+        foreignKey: "role_id",
+      });
+      this.hasOne(models.reset_token, {
+        foreignKey: "user_id",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       });
       this.hasOne(models.admin, {
-        foreignKey: 'user_id',
+        foreignKey: "user_id",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       });
-      this.hasMany(models.pengajuan, {
-        foreignKey: 'user_id',
+      this.hasOne(models.applicant, {
+        foreignKey: "user_id",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       });
-      this.hasMany(models.riwayat_log, {
-        foreignKey: 'user_id',
+      this.hasOne(models.submission, {
+        foreignKey: "user_id",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
+      });
+      this.hasMany(models.admin_log, {
+        foreignKey: "user_id",
+        onDelete: "CASCADE",
+        onUpdate: "CASCADE",
       });
     }
   }
-  User.init({
-    username: DataTypes.STRING,
-    email: {
-      type: DataTypes.STRING,
-      unique: true
+  User.init(
+    {
+      role_id: {
+        type: DataTypes.INTEGER,
+        references: {
+          model: "roles",
+          key: "id",
+        },
+      },
+      username: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
+      email: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
+      password: DataTypes.STRING,
+      last_password_change: DataTypes.DATE,
     },
-    password: DataTypes.STRING,
-    role: {
-      type: DataTypes.ENUM('admin','user'),
-      defaultValue: 'user',
-      allowNull:false
+    {
+      sequelize,
+      modelName: "User",
     }
-  }, {
-    sequelize,
-    modelName: 'User',
-    tableName: 'users'
-  });
+  );
   return User;
 };

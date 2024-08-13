@@ -1,7 +1,7 @@
 "use strict";
 const { Model } = require("sequelize");
 module.exports = (sequelize, DataTypes) => {
-  class admin extends Model {
+  class admin_log extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       });
     }
   }
-  admin.init(
+  admin_log.init(
     {
       user_id: {
         type: DataTypes.INTEGER,
@@ -27,14 +27,15 @@ module.exports = (sequelize, DataTypes) => {
         onUpdate: "CASCADE",
         unique: true,
       },
-      name: DataTypes.STRING,
-      phone_number: DataTypes.STRING,
-      job_position: DataTypes.STRING,
+      title: DataTypes.STRING,
+      description: DataTypes.TEXT,
+      status: DataTypes.STRING,
+      action_type: DataTypes.STRING,
     },
     {
       sequelize,
-      modelName: "admin",
+      modelName: "admin_log",
     }
   );
-  return admin;
+  return admin_log;
 };
