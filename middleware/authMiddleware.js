@@ -23,7 +23,7 @@ module.exports = {
     }
   },
 
-  authorize: async (allowedRoles) => {
+  authorize: (allowedRoles) => {
     return (req, res, next) => {
       const { roleId } = req.user;
 
