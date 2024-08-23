@@ -4,15 +4,15 @@ const secretKey = process.env.JWT_SECRET;
 module.exports = {
   authenticate: async (req, res, next) => {
     try {
-      const authHeader = req.headers["cookie"];
+      const token = req.cookies.token;
 
-      if (!authHeader) return res.sendStatus(401);
-      const cookie = authHeader.split("=")[1];
-      jwt.verify(cookie, secretKey, async (error, decoded) => {
+      if (!token) {
+        return res.status(401).json({ message: "No token provided. Please login" });
+      }
+
+      jwt.verify(token, secretKey, (error, decoded) => {
         if (error) {
-          return res
-            .status(401)
-            .json({ message: "This session has expired. Please login" });
+          return res.status(401).json({ message: "Invalid token or this session has expired. Please login" });
         }
 
         req.user = decoded;

@@ -1,12 +1,12 @@
-const { role } = require("../models");
+const { program } = require("../models");
 
 module.exports = {
-  getAllRoles: async (req, res) => {
+  getAllPrograms: async (req, res) => {
     try {
-      const roles = await role.findAll();
+      const programs = await program.findAll();
       res.status(200).json({
-        message: "Get All Roles",
-        data: roles,
+        message: "Get All Programs",
+        data: programs,
       });
     } catch (error) {
       res.status(500).json({
@@ -15,22 +15,22 @@ module.exports = {
     }
   },
 
-  getRoleById: async (req, res) => {
+  getProgramById: async (req, res) => {
     try {
       const { id } = req.params;
 
-      const roleData = await role.findByPk(id);
+      const programData = await program.findByPk(id);
 
-      if (!roleData) {
+      if (!programData) {
         return res.status(404).json({
           status: "failed",
-          message: "Role not found",
+          message: "Program not found",
         });
       }
 
       res.status(200).json({
-        status: "Successfully get role data",
-        data: roleData,
+        status: "Successfully get program data",
+        data: programData,
       });
     } catch (error) {
       res.status(500).json({
@@ -39,22 +39,25 @@ module.exports = {
     }
   },
 
-  addRole: async (req, res) => {
+  addProgram: async (req, res) => {
     try {
-      const { name } = req.body;
+      const { name, description } = req.body;
 
-      if (!name) {
+      if (!name || !description) {
         return res.status(400).json({
           status: "failed",
           message: "Missing required field(s)",
         });
       }
 
-      const newRole = await role.create({ name: name });
+      const newProgram = await program.create({
+        name: name,
+        description: description,
+      });
 
       res.status(200).json({
-        message: "Successfully added role",
-        data: newRole,
+        message: "Successfully added program",
+        data: newProgram,
       });
     } catch (error) {
       res.status(500).json({
@@ -63,23 +66,24 @@ module.exports = {
     }
   },
 
-  updateRole: async (req, res) => {
+  updateProgram: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name } = req.body;
+      const { name, description } = req.body;
 
-      const existingRole = await role.findByPk(id);
+      const existingProgram = await program.findByPk(id);
 
-      if (!existingRole) {
+      if (!existingProgram) {
         return res.status(404).json({
           status: "failed",
-          message: "Role not found",
+          message: "Program not found",
         });
       }
 
-      const [updated] = await role.update(
+      const [updated] = await program.update(
         {
-          name: name || existingRole.name,
+          name: name || existingProgram.name,
+          description: description || existingProgram.description,
         },
         { where: { id: id } }
       );
@@ -87,13 +91,13 @@ module.exports = {
       if (updated === 0) {
         return res.status(404).json({
           status: "failed",
-          message: "No changes made to role",
+          message: "No changes made to program",
         });
       } else {
-        const updatedRole = await role.findByPk(id);
+        const updatedProgram = await program.findByPk(id);
         res.status(200).json({
-          message: "Successfully updated role",
-          data: updatedRole,
+          message: "Successfully updated program",
+          data: updatedProgram,
         });
       }
     } catch (error) {
@@ -103,7 +107,7 @@ module.exports = {
     }
   },
 
-  deleteRole: async (req, res) => {
+  deleteProgram: async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -114,19 +118,19 @@ module.exports = {
         });
       }
 
-      const existingRole = await role.findByPk(id);
+      const existingProgram = await program.findByPk(id);
 
-      if (!existingRole) {
+      if (!existingProgram) {
         return res.status(404).json({
           status: "failed",
-          message: "Role not found",
+          message: "Program not found",
         });
       }
 
-      await role.destroy({ where: { id: id } });
+      await program.destroy({ where: { id: id } });
 
       res.status(200).json({
-        message: "Successfully deleted role",
+        message: "Successfully deleted program",
       });
     } catch (error) {
       res.status(500).json({
