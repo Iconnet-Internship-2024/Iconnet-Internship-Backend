@@ -27,6 +27,11 @@ module.exports = {
       },
       last_password_change: {
         type: Sequelize.DATE,
+        allowNull: true,
+      },
+      email_verified_at: {
+        type: Sequelize.DATE,
+        allowNull: true,
       },
       createdAt: {
         allowNull: false,

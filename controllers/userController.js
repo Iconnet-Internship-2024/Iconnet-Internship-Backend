@@ -1,4 +1,5 @@
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const { User } = require("../models");
 const { sendEmailUpdatePass } = require("../utils/sendEmail");
 
@@ -21,25 +22,23 @@ module.exports = {
 
   getUserById: async (req, res) => {
     try {
-      const userId = req.user.userId;
-      const user = await User.findOne({
-        where: { id: userId },
-        include: [
-          {
-            model: pengajuan,
-            attributes: ["status"],
-          },
-        ],
+      const { user_id } = req.params;
+      const user = await User.findByPk(user_id, {
         attributes: {
           exclude: ["password", "createdAt", "updatedAt"],
         },
       });
 
-      if (!user || user.length === 0) {
+      if (!user) {
         return res.status(404).json({
           message: "No users found",
         });
       }
+
+      return res.status(200).json({
+        message: "Get User Data",
+        data: user,
+      });
     } catch (error) {
       res.status(500).json({
         message: `Internal Server Error` + error,
@@ -50,26 +49,50 @@ module.exports = {
   updateUsername: async (req, res) => {
     try {
       const { newUsername } = req.body;
-      const userId = req.user.userId;
+      const { userId } = req.user;
 
-      const user = await User.findOne({
-        where: { id: userId, username: newUsername },
+      const existingUser = await User.findOne({
+        where: { username: newUsername },
       });
-
-      if (!user || user.length === 0) {
-        return res.status(404).json({
-          message: "No users found",
+      if (existingUser) {
+        return res.status(400).json({
+          message: "Username already taken, please use a different username.",
         });
       }
 
-      const updatedUsername = await User.update(
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      const [updatedRows] = await User.update(
         { username: newUsername },
         { where: { id: userId } }
       );
 
-      if (updatedUsername[0] > 0) {
+      if (updatedRows > 0) {
+        const updatedUser = await User.findByPk(userId);
+
+        const payload = {
+          userId: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          roleId: updatedUser.role_id,
+        };
+        const jwtSecret = process.env.JWT_SECRET;
+        const newToken = jwt.sign(payload, jwtSecret, { expiresIn: "1d" });
+
+        res.cookie("token", newToken, {
+          httpOnly: true,
+          // secure: true, // Uncomment if using HTTPS
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
         return res.status(200).json({
           message: "Successfully updated username",
+          token: newToken,
         });
       } else {
         return res.status(400).json({
@@ -85,6 +108,7 @@ module.exports = {
 
   updatePassword: async (req, res) => {
     try {
+      const { userId } = req.user;
       const { oldPassword, newPassword, confirmNewPass } = req.body;
 
       if (!oldPassword || !newPassword || !confirmNewPass) {
@@ -94,12 +118,8 @@ module.exports = {
         });
       }
 
-      const userId = req.user.userId;
-      const user = await User.findOne({
-        where: {
-          id: userId,
-        },
-      });
+      const user = await User.findByPk(userId);
+
       if (!user) {
         return res.status(401).send({ message: "User not found" });
       }
@@ -110,9 +130,9 @@ module.exports = {
         user.last_password_change &&
         currentTime - new Date(user.last_password_change) < oneWeek
       ) {
-        return res
-          .status(403)
-          .send({ message: "You can only reset or change your password once a week" });
+        return res.status(403).send({
+          message: "You can only reset or change your password once a week",
+        });
       }
 
       const validPass = await bcrypt.compare(oldPassword, user.password);
@@ -153,19 +173,38 @@ module.exports = {
         { where: { id: user.id } }
       );
 
-      const email = user.email;
-      const username = user.username;
       if (updatePass[0] === 1) {
-        const emailSend = await sendEmailUpdatePass(email, username);
+        const updatedUser = await User.findByPk(userId);
+        const payload = {
+          userId: updatedUser.id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          roleId: updatedUser.role_id,
+        };
+        const jwtSecret = process.env.JWT_SECRET;
+        const newToken = jwt.sign(payload, jwtSecret, { expiresIn: "1d" });
 
-        if (!emailSend.success) {
-          return res.status(500).json({
-            message: "Password updated successful, but email not sent.",
-          });
-        }
+        res.cookie("token", newToken, {
+          httpOnly: true,
+          // secure: true, // Uncomment if using HTTPS
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        const emailSend = await sendEmailUpdatePass(user.email, user.username);
+
+        // if (!emailSend.success) {
+        //   return res.status(500).json({
+        //     message: "Password updated successfully, but email not sent.",
+        //   });
+        // }
 
         return res.status(200).json({
-          message: "Password updated successful and email sent.",
+          message: "Password updated successfully and email sent.",
+          token: newToken,
+        });
+      } else {
+        return res.status(400).json({
+          message: "Failed to update password",
         });
       }
     } catch (error) {

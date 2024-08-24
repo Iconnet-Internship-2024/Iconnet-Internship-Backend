@@ -56,7 +56,14 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
       },
       password: DataTypes.STRING,
-      last_password_change: DataTypes.DATE,
+      last_password_change: { 
+        type: DataTypes.DATE, 
+        allowNull: true 
+      },
+      email_verified_at: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       sequelize,

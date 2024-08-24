@@ -51,12 +51,20 @@ module.exports = (sequelize, DataTypes) => {
       end_date: DataTypes.DATE,
       cover_letter: DataTypes.STRING,
       proposal: DataTypes.STRING,
-      status: DataTypes.ENUM("pending", "in_process", "accepted", "rejected"),
+      status: {
+        type: DataTypes.ENUM("pending", "in_process", "accepted", "rejected"),
+        defaultValue: "pending",
+      },
+      deletedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
     },
     {
       sequelize,
       modelName: "submission",
       paranoid: true,
+      timestamps: true,
     }
   );
   return submission;

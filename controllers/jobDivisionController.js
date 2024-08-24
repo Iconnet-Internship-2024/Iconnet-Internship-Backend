@@ -1,12 +1,12 @@
-const { role } = require("../models");
+const { job_division } = require("../models");
 
 module.exports = {
-  getAllRoles: async (req, res) => {
+  getAllJobDivisions: async (req, res) => {
     try {
-      const roles = await role.findAll();
+      const jobDivisions = await job_division.findAll();
       res.status(200).json({
-        message: "Get All Roles",
-        data: roles,
+        message: "Get All Job Divisions",
+        data: jobDivisions,
       });
     } catch (error) {
       res.status(500).json({
@@ -15,22 +15,22 @@ module.exports = {
     }
   },
 
-  getRoleById: async (req, res) => {
+  getJobDivisionById: async (req, res) => {
     try {
       const { id } = req.params;
 
-      const roleData = await role.findByPk(id);
+      const jobDivisionData = await job_division.findByPk(id);
 
-      if (!roleData) {
+      if (!jobDivisionData) {
         return res.status(404).json({
           status: "failed",
-          message: "Role not found",
+          message: "Job Division not found",
         });
       }
 
       res.status(200).json({
-        status: "Successfully get role data",
-        data: roleData,
+        status: "Successfully get job division data",
+        data: jobDivisionData,
       });
     } catch (error) {
       res.status(500).json({
@@ -39,22 +39,25 @@ module.exports = {
     }
   },
 
-  addRole: async (req, res) => {
+  addJobDivision: async (req, res) => {
     try {
-      const { name } = req.body;
+      const { name, description } = req.body;
 
-      if (!name) {
+      if (!name || !description) {
         return res.status(400).json({
           status: "failed",
           message: "Missing required field(s)",
         });
       }
 
-      const newRole = await role.create({ name: name });
+      const newJobDivision = await job_division.create({
+        name: name,
+        description: description,
+      });
 
       res.status(200).json({
-        message: "Successfully added role",
-        data: newRole,
+        message: "Successfully added job division",
+        data: newJobDivision,
       });
     } catch (error) {
       res.status(500).json({
@@ -63,23 +66,24 @@ module.exports = {
     }
   },
 
-  updateRole: async (req, res) => {
+  updateJobDivision: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name } = req.body;
+      const { name, description } = req.body;
 
-      const existingRole = await role.findByPk(id);
+      const existingJobDivision = await job_division.findByPk(id);
 
-      if (!existingRole) {
+      if (!existingJobDivision) {
         return res.status(404).json({
           status: "failed",
-          message: "Role not found",
+          message: "Job division not found",
         });
       }
 
-      const [updated] = await role.update(
+      const [updated] = await job_division.update(
         {
-          name: name || existingRole.name,
+          name: name || existingJobDivision.name,
+          description: description || existingJobDivision.description,
         },
         { where: { id: id } }
       );
@@ -87,13 +91,13 @@ module.exports = {
       if (updated === 0) {
         return res.status(404).json({
           status: "failed",
-          message: "No changes made to role",
+          message: "No changes made to job division",
         });
       } else {
-        const updatedRole = await role.findByPk(id);
+        const updatedJobDivision = await job_division.findByPk(id);
         res.status(200).json({
-          message: "Successfully updated role",
-          data: updatedRole,
+          message: "Successfully updated job division",
+          data: updatedJobDivision,
         });
       }
     } catch (error) {
@@ -103,7 +107,7 @@ module.exports = {
     }
   },
 
-  deleteRole: async (req, res) => {
+  deleteJobDivision: async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -114,19 +118,19 @@ module.exports = {
         });
       }
 
-      const existingRole = await role.findByPk(id);
+      const existingJobDivision = await job_division.findByPk(id);
 
-      if (!existingRole) {
+      if (!existingJobDivision) {
         return res.status(404).json({
           status: "failed",
-          message: "Role not found",
+          message: "Job division not found",
         });
       }
 
-      await role.destroy({ where: { id: id } });
+      await job_division.destroy({ where: { id: id } });
 
       res.status(200).json({
-        message: "Successfully deleted role",
+        message: "Successfully deleted job division",
       });
     } catch (error) {
       res.status(500).json({
