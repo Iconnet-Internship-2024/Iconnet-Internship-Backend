@@ -26,7 +26,7 @@ module.exports = {
         include: [
           {
             model: User,
-            attributes: ["username"],
+            attributes: ["username", "email"],
           },
           {
             model: job_division,
@@ -44,7 +44,7 @@ module.exports = {
       });
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },
@@ -53,7 +53,17 @@ module.exports = {
     try {
       const { id } = req.params;
 
-      const submissionData = await submission.findByPk(id);
+      const submissionData = await submission.findByPk(id, {
+        include: {
+          model: User,
+          attributes: ["email", "username"],
+          include: [
+            {
+              model: applicant,
+            },
+          ],
+        },
+      });
 
       if (!submissionData) {
         return res.status(404).json({
@@ -68,17 +78,17 @@ module.exports = {
       });
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },
 
   getSubmissionByUserId: async (req, res) => {
     try {
-      const { userId } = req.user;
+      const { user_id } = req.params;
 
       const existingSubmission = await submission.findOne({
-        where: { user_id: userId },
+        where: { user_id: user_id },
       });
 
       if (!existingSubmission) {
@@ -94,7 +104,7 @@ module.exports = {
       });
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },
@@ -121,7 +131,7 @@ module.exports = {
       });
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },
@@ -148,7 +158,7 @@ module.exports = {
       });
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },
@@ -374,23 +384,6 @@ module.exports = {
         });
       }
 
-      const decodePath = (url) => {
-        const path = url.split("/o/")[1].split("?")[0];
-        return decodeURIComponent(path);
-      };
-
-      if (existingSubmission.cover_letter) {
-        const clPath = decodePath(existingSubmission.cover_letter);
-        const clRef = ref(storage, `${clPath}`);
-        await deleteObject(clRef);
-      }
-
-      if (existingSubmission.proposal) {
-        const proposalPath = decodePath(existingSubmission.proposal);
-        const proposalRef = ref(storage, `${proposalPath}`);
-        await deleteObject(proposalRef);
-      }
-
       const deleted = await submission.destroy({ where: { id: id } });
 
       if (deleted) {
@@ -438,7 +431,6 @@ module.exports = {
         await deleteObject(proposalRef);
       }
 
-      // Hard delete the submission record
       const deleted = await submission.destroy({
         where: { id: id },
         force: true, // Force hard delete
@@ -455,7 +447,7 @@ module.exports = {
       }
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },

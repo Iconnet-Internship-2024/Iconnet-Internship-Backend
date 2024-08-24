@@ -13,13 +13,12 @@ const { authenticate, authorize } = require("../middleware/authMiddleware");
 
 router.use("/auth", authRoute);
 router.use("/user", authenticate, userRoute);
-router.use("/role", authenticate, roleRoute);
+router.use("/role", authenticate, authorize([3]), roleRoute);
 router.use("/applicant", authenticate, applicantRoute);
-// router.use("/applicant", applicantRoute);
 router.use("/admin", authenticate, authorize([3]), adminRoute);
 router.use("/jobDivision", authenticate, authorize([3]), jobDivisionRoute);
 router.use("/program", authenticate, authorize([3]), programRoute);
 router.use("/submission", authenticate, submissionRoute);
-router.use("/submissionStatistic", authenticate, submissionStatisticRoute);
+router.use("/submissionStatistic", authenticate, authorize([3]), submissionStatisticRoute);
 
 module.exports = router;

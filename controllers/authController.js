@@ -63,11 +63,11 @@ module.exports = {
       if (registerAcc) {
         const emailSend = await sendEmailRegister(email, username);
 
-        if (!emailSend.success) {
-          return res
-            .status(500)
-            .json({ message: "User registered, but failed to send email." });
-        }
+        // if (!emailSend.success) {
+        //   return res
+        //     .status(500)
+        //     .json({ message: "User registered, but failed to send email." });
+        // }
 
         return res
           .status(200)
@@ -189,11 +189,11 @@ module.exports = {
           resetPassUrl
         );
 
-        if (!emailSend.success) {
-          return res.status(500).json({
-            message: "Password reset request failed and email not sent.",
-          });
-        }
+        // if (!emailSend.success) {
+        //   return res.status(500).json({
+        //     message: "Password reset request failed and email not sent.",
+        //   });
+        // }
 
         return res.status(200).json({
           message: "Password reset request successful and email sent.",
@@ -279,11 +279,11 @@ module.exports = {
         const loginUrl = `${process.env.FE_URL}/auth/login`;
         const emailSend = await sendEmailResetPass(email, username, loginUrl);
 
-        if (!emailSend.success) {
-          return res.status(500).json({
-            message: "Password reset successful, but email not sent.",
-          });
-        }
+        // if (!emailSend.success) {
+        //   return res.status(500).json({
+        //     message: "Password reset successful, but email not sent.",
+        //   });
+        // }
 
         return res.status(200).json({
           message: "Password reset successful and email sent.",

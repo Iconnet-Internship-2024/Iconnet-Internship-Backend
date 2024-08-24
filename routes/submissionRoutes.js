@@ -2,11 +2,13 @@ const express = require("express");
 const router = express.Router();
 const submissionController = require("../controllers/submissionController");
 const upload = require("../middleware/multer");
+const { authorize } = require("../middleware/authMiddleware");
 
 router.get("/status", submissionController.getSubmissionStatusByUserId);
 router.get("/deletedSubmission", submissionController.getAllDeletedSubmissions);
+router.get("/user/:user_id", submissionController.getSubmissionByUserId);
 router.get("/:id", submissionController.getSubmissionById);
-router.get("/", submissionController.getAllSubmissions);
+router.get("/", authorize([3]), submissionController.getAllSubmissions);
 
 router.post(
   "/",
@@ -16,11 +18,22 @@ router.post(
   ]),
   submissionController.addSubmission
 );
+
 router.put(
   "/updateSubmissionStatus/:id",
+  authorize([3]),
   submissionController.updateSubmissionStatus
 );
-router.delete("/softDelete/:id", submissionController.softDeleteSubmission);
-router.delete("/hardDelete/:id", submissionController.hardDeleteSubmission);
+
+router.delete(
+  "/softDelete/:id",
+  authorize([3]),
+  submissionController.softDeleteSubmission
+);
+router.delete(
+  "/hardDelete/:id",
+  authorize([3]),
+  submissionController.hardDeleteSubmission
+);
 
 module.exports = router;
