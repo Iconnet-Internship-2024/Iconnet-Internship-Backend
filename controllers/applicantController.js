@@ -6,6 +6,8 @@ const {
   uploadBytesResumable,
   getDownloadURL,
 } = require("firebase/storage");
+const imagekit = require("../config/imagekit");
+const upload = require("../middleware/multer");
 
 module.exports = {
   getAllApplicants: async (req, res) => {
@@ -238,6 +240,162 @@ module.exports = {
     } catch (error) {
       res.status(500).json({
         message: `Internal Server Error` + error,
+      });
+    }
+  },
+
+  addApplicantImageKit: async (req, res) => {
+    try {
+      const { userId } = req.user;
+      const {
+        name,
+        place_of_birth,
+        date_of_birth,
+        gender,
+        phone_number,
+        city,
+        address,
+        religion,
+        education_degree,
+        student_id,
+        education_institution,
+        education_major,
+        education_faculty,
+      } = req.body;
+
+      const photo = req.files["photo"] ? req.files["photo"][0] : null;
+      const education_transcript = req.files["education_transcript"]
+        ? req.files["education_transcript"][0]
+        : null;
+
+      const validGenders = ["male", "female"];
+      const validReligions = [
+        "islam",
+        "kristen",
+        "katolik",
+        "hindu",
+        "buddha",
+        "konghucu",
+        "lainnya",
+      ];
+      const validEducationDegrees = [
+        "D1",
+        "D2",
+        "D3",
+        "D4",
+        "S1",
+        "S2",
+        "S3",
+        "SMK",
+        "SMA",
+      ];
+
+      if (
+        !photo ||
+        !userId ||
+        !name ||
+        !place_of_birth ||
+        !date_of_birth ||
+        !gender ||
+        !phone_number ||
+        !city ||
+        !address ||
+        !religion ||
+        !education_degree ||
+        !student_id ||
+        !education_institution ||
+        !education_major ||
+        !education_transcript
+      ) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Missing required field(s)",
+        });
+      }
+
+      if (!validGenders.includes(gender)) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Invalid value for gender",
+        });
+      }
+
+      if (!validReligions.includes(religion)) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Invalid value for religion",
+        });
+      }
+
+      if (!validEducationDegrees.includes(education_degree)) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Invalid value for education degree",
+        });
+      }
+
+      const existingApplicant = await applicant.findOne({
+        where: { user_id: userId },
+      });
+
+      if (existingApplicant) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Applicant already exists",
+        });
+      }
+
+      const today = new Date();
+      const date =
+        today.getFullYear() +
+        "-" +
+        (today.getMonth() + 1) +
+        "-" +
+        today.getDate();
+      const time =
+        today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
+      const dateTime = date + " " + time;
+
+      const photoUploadResponse = await imagekit.upload({
+        file: photo.buffer,
+        fileName: `${photo.originalname}-${dateTime}`,
+        folder: "/Images/",
+      });
+
+      const transcriptUploadResponse = await imagekit.upload({
+        file: education_transcript.buffer,
+        fileName: `${education_transcript.originalname}-${dateTime}`,
+        folder: "/Files/Transcripts/",
+      });
+
+      const newApplicant = {
+        user_id: userId,
+        photo: photoUploadResponse.url,
+        name,
+        place_of_birth,
+        date_of_birth,
+        gender,
+        phone_number,
+        city,
+        address,
+        religion,
+        education_degree,
+        student_id,
+        education_institution,
+        education_major,
+        education_faculty,
+        education_transcript: transcriptUploadResponse.url,
+      };
+
+      const addedApplicant = await applicant.create(newApplicant);
+
+      res.status(200).json({
+        message: "Successfully added applicant",
+        data: addedApplicant,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: `Internal Server Error: ${error.message}`,
       });
     }
   },

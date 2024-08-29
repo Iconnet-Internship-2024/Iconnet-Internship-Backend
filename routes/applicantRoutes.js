@@ -9,6 +9,14 @@ router.get("/:id", applicantController.getApplicantById);
 router.get("/", authorize([3]), applicantController.getAllApplicants);
 
 router.post(
+  "/imagekit",
+  upload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "education_transcript", maxCount: 1 },
+  ]),
+  applicantController.addApplicantImageKit
+);
+router.post(
   "/",
   upload.fields([
     { name: "photo", maxCount: 1 },
