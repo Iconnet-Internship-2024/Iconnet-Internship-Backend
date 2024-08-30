@@ -9,6 +9,14 @@ router.get("/:id", applicantController.getApplicantById);
 router.get("/", authorize([3]), applicantController.getAllApplicants);
 
 router.post(
+  "/local",
+  upload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "education_transcript", maxCount: 1 },
+  ]),
+  applicantController.addApplicantLocal
+);
+router.post(
   "/imagekit",
   upload.fields([
     { name: "photo", maxCount: 1 },
@@ -26,11 +34,17 @@ router.post(
 );
 
 router.put(
+  "/updatePhotoLocal",
+  upload.single("photo"),
+  applicantController.updatePhotoLocal
+);
+router.put(
   "/updatePhoto",
   upload.single("photo"),
   applicantController.updatePhoto
 );
 
+router.delete("/local/:id", applicantController.deleteApplicantLocal);
 router.delete("/:id", applicantController.deleteApplicant);
 
 module.exports = router;

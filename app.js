@@ -7,6 +7,7 @@ const cors = require("cors");
 const morgan = require("morgan");
 const logToDatabase = require('./middleware/logger');
 const { testDBConnection } = require('./config/config');
+const path = require('path');
 
 app.use(cors());
 app.use(cookieParser());
@@ -18,6 +19,8 @@ app.use(logToDatabase);
 // morgan: common, tiny, short, dev, combined
 app.use(morgan('tiny'));
 app.use("/", routes);
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
