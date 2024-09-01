@@ -9,20 +9,20 @@ router.get("/:id", applicantController.getApplicantById);
 router.get("/", authorize([3]), applicantController.getAllApplicants);
 
 router.post(
+  "/add/im",
+  upload.fields([
+    { name: "photo", maxCount: 1 },
+    { name: "education_transcript", maxCount: 1 },
+  ]),
+  applicantController.addApplicantIm
+);
+router.post(
   "/local",
   upload.fields([
     { name: "photo", maxCount: 1 },
     { name: "education_transcript", maxCount: 1 },
   ]),
   applicantController.addApplicantLocal
-);
-router.post(
-  "/imagekit",
-  upload.fields([
-    { name: "photo", maxCount: 1 },
-    { name: "education_transcript", maxCount: 1 },
-  ]),
-  applicantController.addApplicantImageKit
 );
 router.post(
   "/",
@@ -34,16 +34,22 @@ router.post(
 );
 
 router.put(
-  "/updatePhotoLocal",
+  "/up/im",
   upload.single("photo"),
-  applicantController.updatePhotoLocal
+  applicantController.updatePhotoIm
 );
 router.put(
   "/updatePhoto",
   upload.single("photo"),
   applicantController.updatePhoto
 );
+router.put(
+  "/updatePhotoLocal",
+  upload.single("photo"),
+  applicantController.updatePhotoLocal
+);
 
+router.delete("/del/im/:id", applicantController.deleteApplicantIm);
 router.delete("/local/:id", applicantController.deleteApplicantLocal);
 router.delete("/:id", applicantController.deleteApplicant);
 

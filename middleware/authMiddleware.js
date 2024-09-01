@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const secretKey = process.env.JWT_SECRET;
 
 module.exports = {
+  // Cookie-based Authentication
   // authenticate: async (req, res, next) => {
   //   try {
   //     const token = req.cookies.token;
@@ -23,6 +24,7 @@ module.exports = {
   //   }
   // },
 
+  // Bearer Token-based Authentication
   authenticate: async (req, res, next) => {
     try {
       const authHeader = req.headers.authorization;

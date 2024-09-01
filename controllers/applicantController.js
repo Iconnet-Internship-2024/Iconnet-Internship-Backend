@@ -7,7 +7,6 @@ const {
   getDownloadURL,
 } = require("firebase/storage");
 const imagekit = require("../config/imagekit");
-const upload = require("../middleware/multer");
 const fs = require("fs");
 const path = require("path");
 
@@ -246,7 +245,7 @@ module.exports = {
     }
   },
 
-  addApplicantImageKit: async (req, res) => {
+  addApplicantIm: async (req, res) => {
     try {
       const { userId } = req.user;
       const {
@@ -397,7 +396,7 @@ module.exports = {
       });
     } catch (error) {
       res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
+        message: `Internal Server Error` + error,
       });
     }
   },
@@ -602,6 +601,98 @@ module.exports = {
     }
   },
 
+  updatePhotoIm: async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const newPhoto = req.file;
+
+      if (!newPhoto) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Photo file is required",
+        });
+      }
+
+      const existingApplicant = await applicant.findOne({
+        where: { user_id: userId },
+      });
+
+      if (!existingApplicant) {
+        return res.status(400).json({
+          status: "failed",
+          message: "Applicant not found",
+        });
+      }
+
+      if (existingApplicant.photo) {
+        const urlParts = existingApplicant.photo.split("/");
+        const fileNameWithExtension = urlParts.pop();
+
+        const files = await imagekit.listFiles({
+          folder: "/Images",
+        });
+
+        const file = files.find((f) => f.name.includes(fileNameWithExtension));
+
+        if (file) {
+          const fileId = file.fileId;
+
+          imagekit.deleteFile(fileId, function (error, result) {
+            if (error) {
+              return res.status(500).json({
+                message: "Failed to delete the previous photo",
+                error: error,
+              });
+            }
+          });
+        } else {
+          console.log("File not found in ImageKit");
+        }
+      }
+
+      const today = new Date();
+      const date = `${today.getFullYear()}-${
+        today.getMonth() + 1
+      }-${today.getDate()}`;
+      const time = `${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`;
+      const dateTime = `${date} ${time}`;
+
+      const newFileName = `${newPhoto.originalname}-${dateTime}`;
+
+      imagekit.upload(
+        {
+          file: newPhoto.buffer,
+          fileName: newFileName,
+          folder: "/Images",
+        },
+        async function (error, result) {
+          if (error) {
+            return res.status(500).json({
+              message: "Image upload failed",
+              error: error,
+            });
+          } else {
+            const photoURL = result.url;
+
+            await applicant.update(
+              { photo: photoURL },
+              { where: { user_id: userId } }
+            );
+
+            res.status(200).json({
+              message: "Successfully updated photo",
+              photoURL: photoURL,
+            });
+          }
+        }
+      );
+    } catch (error) {
+      res.status(500).json({
+        message: `Internal Server Error` + error,
+      });
+    }
+  },
+
   updatePhotoLocal: async (req, res) => {
     try {
       const userId = req.user.userId;
@@ -626,7 +717,12 @@ module.exports = {
       }
 
       if (existingApplicant.photo) {
-        const oldPhotoPath = path.join(__dirname, '..', 'uploads/images', path.basename(existingApplicant.photo));
+        const oldPhotoPath = path.join(
+          __dirname,
+          "..",
+          "uploads/images",
+          path.basename(existingApplicant.photo)
+        );
         try {
           await fs.promises.unlink(oldPhotoPath);
         } catch (error) {
@@ -638,7 +734,12 @@ module.exports = {
       }
 
       const newFileName = newPhoto.filename;
-      const newFilePath = path.join(__dirname, '..', 'uploads/images', newFileName);
+      const newFilePath = path.join(
+        __dirname,
+        "..",
+        "uploads/images",
+        newFileName
+      );
 
       await fs.promises.rename(newPhoto.path, newFilePath);
 
@@ -711,6 +812,110 @@ module.exports = {
     }
   },
 
+  deleteApplicantIm: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const existingApplicant = await applicant.findOne({
+        where: { id: id },
+      });
+
+      if (!existingApplicant) {
+        return res.status(404).json({
+          status: "failed",
+          message: "Applicant not found",
+        });
+      }
+
+      const extractFileName = (url) => {
+        const parts = url.split("/");
+        return parts.pop().split("?")[0];
+      };
+
+      if (existingApplicant.photo) {
+        const photoFileName = extractFileName(existingApplicant.photo);
+
+        imagekit.listFiles(
+          {
+            folder: "/Images",
+            name: photoFileName,
+          },
+          function (error, result) {
+            if (error) {
+              console.log("Error finding file:", error);
+              return res.status(500).json({
+                message: "Failed to find photo file",
+                error: error,
+              });
+            }
+
+            if (result.length > 0) {
+              const fileId = result[0].fileId;
+
+              imagekit.deleteFile(fileId, function (error) {
+                if (error) {
+                  console.log("Error deleting file:", error);
+                  return res.status(500).json({
+                    message: "Failed to delete photo file",
+                    error: error,
+                  });
+                }
+              });
+            }
+          }
+        );
+      }
+
+      if (existingApplicant.education_transcript) {
+        const transcriptFileName = extractFileName(
+          existingApplicant.education_transcript
+        );
+
+        imagekit.listFiles(
+          {
+            folder: "/Files/Transcripts",
+            name: transcriptFileName,
+          },
+          function (error, result) {
+            if (error) {
+              console.log("Error finding file:", error);
+              return res.status(500).json({
+                message: "Failed to find education transcript file",
+                error: error,
+              });
+            }
+
+            if (result.length > 0) {
+              const fileId = result[0].fileId;
+
+              imagekit.deleteFile(fileId, function (error) {
+                if (error) {
+                  console.log("Error deleting file:", error);
+                  return res.status(500).json({
+                    message: "Failed to delete education transcript file",
+                    error: error,
+                  });
+                }
+              });
+            }
+          }
+        );
+      }
+
+      const deleted = await applicant.destroy({ where: { id: id } });
+
+      if (deleted) {
+        res.status(200).json({
+          message: "Successfully deleted applicant",
+        });
+      }
+    } catch (error) {
+      res.status(500).json({
+        message: `Internal Server Error` + error,
+      });
+    }
+  },
+
   deleteApplicantLocal: async (req, res) => {
     try {
       const { id } = req.params;
@@ -743,7 +948,12 @@ module.exports = {
       };
 
       if (existingApplicant.photo) {
-        const photoPath = path.join(__dirname, '..', 'uploads/images', path.basename(existingApplicant.photo));
+        const photoPath = path.join(
+          __dirname,
+          "..",
+          "uploads/images",
+          path.basename(existingApplicant.photo)
+        );
         try {
           await deleteFile(photoPath);
         } catch (error) {
@@ -755,7 +965,12 @@ module.exports = {
       }
 
       if (existingApplicant.education_transcript) {
-        const transcriptPath = path.join(__dirname, '..', 'uploads/transcripts', path.basename(existingApplicant.education_transcript));
+        const transcriptPath = path.join(
+          __dirname,
+          "..",
+          "uploads/transcripts",
+          path.basename(existingApplicant.education_transcript)
+        );
         try {
           await deleteFile(transcriptPath);
         } catch (error) {
