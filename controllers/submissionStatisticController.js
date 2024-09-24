@@ -1,86 +1,32 @@
 const { submission, User, program } = require("../models");
-const { Op, Sequelize } = require("sequelize");
+const { Op } = require("sequelize");
 
 module.exports = {
-  getTotalSubmissions: async (req, res) => {
+  getTotalSubmissionsByStatus: async (req, res) => {
     try {
-      const totalSubmissions = await submission.count();
-
-      res.status(200).json({
-        message: "Total Submissions",
-        total: totalSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalPendingSubmissions: async (req, res) => {
-    try {
+      const getTotalSubmissions = await submission.count();
       const totalPendingSubmissions = await submission.count({
         where: { status: "pending" },
-        order: [["createdAt", "DESC"]],
       });
-
-      res.status(200).json({
-        message: "Total Pending Submissions",
-        total: totalPendingSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalInProcessSubmissions: async (req, res) => {
-    try {
       const totalInProcessSubmissions = await submission.count({
         where: { status: "in_process" },
-        order: [["createdAt", "DESC"]],
       });
-
-      res.status(200).json({
-        message: "Total In Process Submissions",
-        total: totalInProcessSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalAcceptedSubmissions: async (req, res) => {
-    try {
       const totalAcceptedSubmissions = await submission.count({
         where: { status: "accepted" },
-        order: [["createdAt", "DESC"]],
       });
-
-      res.status(200).json({
-        message: "Total Accepted Submissions",
-        total: totalAcceptedSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalRejectedSubmissions: async (req, res) => {
-    try {
       const totalRejectedSubmissions = await submission.count({
         where: { status: "rejected" },
-        order: [["createdAt", "DESC"]],
       });
 
       res.status(200).json({
-        message: "Total Rejected Submissions",
-        total: totalRejectedSubmissions,
+        message: "Total Submissions and Status Breakdown",
+        totalSubmissions: getTotalSubmissions,
+        totalByStatus: {
+          pending: totalPendingSubmissions,
+          in_process: totalInProcessSubmissions,
+          accepted: totalAcceptedSubmissions,
+          rejected: totalRejectedSubmissions,
+        },
       });
     } catch (error) {
       res.status(500).json({
@@ -89,194 +35,152 @@ module.exports = {
     }
   },
 
-  getSubmissionStatisticsByRoleAndMonth: async (req, res) => {
+  getTotalSubmissionsByStatusAndRole: async (req, res) => {
     try {
-      // Mengambil tahun dari query parameter, jika tidak ada gunakan tahun sekarang
-      const { year } = req.query;
-      const selectedYear = year || new Date().getFullYear();
+      const { role_id } = req.query;
 
-      const statistics = await submission.findAll({
-        attributes: [
-          [Sequelize.fn("MONTH", Sequelize.col("createdAt")), "month"],
-          [Sequelize.fn("COUNT", Sequelize.col("submission.id")), "total"],
-          [Sequelize.literal(`role_id`), "role_id"],
-        ],
+      if (!role_id) {
+        return res.status(400).json({
+          message: "role_id parameter is required",
+        });
+      }
+
+      const getTotalSubmissions = await submission.count({
         include: [
           {
             model: User,
-            where: { role_id: [1, 2] },
-            attributes: ["role_id"],
+            where: { role_id: role_id },
           },
         ],
-        where: {
+      });
+
+      const totalPendingSubmissions = await submission.count({
+        include: [
+          {
+            model: User,
+            where: { role_id: role_id },
+          },
+        ],
+        where: { status: "pending" },
+      });
+
+      const totalInProcessSubmissions = await submission.count({
+        include: [
+          {
+            model: User,
+            where: { role_id: role_id },
+          },
+        ],
+        where: { status: "in_process" },
+      });
+
+      const totalAcceptedSubmissions = await submission.count({
+        include: [
+          {
+            model: User,
+            where: { role_id: role_id },
+          },
+        ],
+        where: { status: "accepted" },
+      });
+
+      const totalRejectedSubmissions = await submission.count({
+        include: [
+          {
+            model: User,
+            where: { role_id: role_id },
+          },
+        ],
+        where: { status: "rejected" },
+      });
+
+      res.status(200).json({
+        message: `Total Submissions and Status Breakdown for Role ${role_id}`,
+        totalSubmissions: getTotalSubmissions,
+        totalByStatus: {
+          pending: totalPendingSubmissions,
+          in_process: totalInProcessSubmissions,
+          accepted: totalAcceptedSubmissions,
+          rejected: totalRejectedSubmissions,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: `Internal Server Error: ${error.message}`,
+      });
+    }
+  },
+
+  filterSubmission: async (req, res) => {
+    try {
+      const { month, year, status, program_id, role_id } = req.query;
+      const selectedYear = year || new Date().getFullYear(); // Gunakan tahun saat ini jika tidak disertakan
+
+      // Validasi input bulan jika disertakan
+      if (month && (isNaN(month) || month < 1 || month > 12)) {
+        return res
+          .status(400)
+          .json({
+            message:
+              "Invalid month parameter. It must be a number between 1 and 12.",
+          });
+      }
+
+      let dateFilter = {};
+      if (month) {
+        // Jika bulan disertakan, tentukan rentang tanggal untuk bulan yang dipilih
+        const startDate = new Date(
+          `${selectedYear}-${month.padStart(2, "0")}-01`
+        );
+        const endDate = new Date(selectedYear, month, 0); // Hari terakhir dari bulan yang dipilih
+        dateFilter = {
+          createdAt: {
+            [Op.between]: [startDate, endDate],
+          },
+        };
+      } else {
+        // Jika bulan tidak disertakan, ambil semua submissions untuk tahun yang dipilih
+        dateFilter = {
           createdAt: {
             [Op.between]: [
               new Date(`${selectedYear}-01-01`),
               new Date(`${selectedYear}-12-31`),
             ],
           },
-        },
-        group: [
-          Sequelize.literal("role_id"),
-          Sequelize.fn("MONTH", Sequelize.col("createdAt")),
-        ],
-        order: [[Sequelize.fn("MONTH", Sequelize.col("createdAt")), "ASC"]],
-      });
+        };
+      }
 
-      res.status(200).json({
-        message: `Submission statistics for role_id 1 and 2 in year ${selectedYear}`,
-        data: statistics,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
+      const whereConditions = {
+        ...dateFilter,
+        ...(status ? { status } : {}),
+        ...(program_id ? { program_id } : {}),
+      };
 
-  getTotalSubmissionsByRole: async (req, res) => {
-    try {
-      const totalSubmissions = await submission.count({
-        include: [
-          {
-            model: User,
-            where: { role_id: [1, 2] },
-            attributes: [],
-          },
-        ],
-      });
-
-      res.status(200).json({
-        message: "Total Submissions by Role",
-        total: totalSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalPendingSubmissionsByRole: async (req, res) => {
-    try {
-      const totalPendingSubmissions = await submission.count({
-        where: { status: "pending" },
-        include: [
-          {
-            model: User,
-            where: { role_id: [1, 2] },
-            attributes: [],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
-
-      res.status(200).json({
-        message: "Total Pending Submissions by Role",
-        total: totalPendingSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalInProcessSubmissionsByRole: async (req, res) => {
-    try {
-      const totalInProcessSubmissions = await submission.count({
-        where: { status: "in_process" },
-        include: [
-          {
-            model: User,
-            where: { role_id: [1, 2] },
-            attributes: [],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
-
-      res.status(200).json({
-        message: "Total In Process Submissions by Role",
-        total: totalInProcessSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalAcceptedSubmissionsByRole: async (req, res) => {
-    try {
-      const totalAcceptedSubmissions = await submission.count({
-        where: { status: "accepted" },
-        include: [
-          {
-            model: User,
-            where: { role_id: [1, 2] },
-            attributes: [],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
-
-      res.status(200).json({
-        message: "Total Accepted Submissions by Role",
-        total: totalAcceptedSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  getTotalRejectedSubmissionsByRole: async (req, res) => {
-    try {
-      const totalRejectedSubmissions = await submission.count({
-        where: { status: "rejected" },
-        include: [
-          {
-            model: User,
-            where: { role_id: [1, 2] },
-            attributes: [],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
-
-      res.status(200).json({
-        message: "Total Rejected Submissions by Role",
-        total: totalRejectedSubmissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  filterSubmissionsByStatus: async (req, res) => {
-    const { status } = req.query;
-    try {
       const submissions = await submission.findAll({
-        where: { status },
+        where: whereConditions,
         include: [
           {
             model: User,
-            attributes: ["username"],
+            ...(role_id ? { where: { role_id } } : {}),
+            attributes: ["username", "role_id"],
           },
           {
             model: program,
-            attributes: ["name"],
+            attributes: ["id", "name"],
           },
         ],
         order: [["createdAt", "DESC"]],
       });
 
+      let message = `Filtered Submissions`;
+      if (month) message += ` for month ${month}`;
+      if (status) message += ` with status ${status}`;
+      if (program_id) message += ` for program ID ${program_id}`;
+      if (role_id) message += ` with role ID ${role_id}`;
+      message += ` of year ${selectedYear}`;
+
       res.status(200).json({
-        message: `Filtered Submissions by Status: ${status}`,
+        message,
         data: submissions,
       });
     } catch (error) {
@@ -286,15 +190,32 @@ module.exports = {
     }
   },
 
-  // Filter submission by program
-  filterSubmissionsByProgram: async (req, res) => {
-    const { program_id } = req.query;
+  searchSubmission: async (req, res) => {
     try {
+      const { username, user_id } = req.query;
+      const whereConditions = {};
+
+      if (username) {
+        whereConditions.username = { [Op.like]: `%${username}%` };
+      }
+
+      if (user_id) {
+        whereConditions.user_id = user_id;
+      }
+
+      // If neither username nor user_id is provided, return an error
+      // if (!username && !user_id) {
+      //   return res.status(400).json({ message: "At least one of username or user_id must be provided." });
+      // }
+
       const submissions = await submission.findAll({
-        where: { program_id },
+        where: user_id ? { user_id } : {}, // Apply user_id filter if provided
         include: [
           {
             model: User,
+            ...(username
+              ? { where: { username: { [Op.like]: `%${username}%` } } }
+              : {}), // Apply username filter if provided
             attributes: ["username"],
           },
           {
@@ -305,8 +226,12 @@ module.exports = {
         order: [["createdAt", "DESC"]],
       });
 
+      let message = "Search Submissions";
+      if (username) message += ` by Username: ${username}`;
+      if (user_id) message += ` by User ID: ${user_id}`;
+
       res.status(200).json({
-        message: `Filtered Submissions by Program ID: ${program_id}`,
+        message,
         data: submissions,
       });
     } catch (error) {
@@ -316,69 +241,18 @@ module.exports = {
     }
   },
 
-  // Search submission by username
-  searchSubmissionsByUsername: async (req, res) => {
-    const { username } = req.query;
+  sortSubmissions: async (req, res) => {
     try {
-      const submissions = await submission.findAll({
-        include: [
-          {
-            model: User,
-            where: { username: { [Op.like]: `%${username}%` } },
-            attributes: ["username"],
-          },
-          {
-            model: program,
-            attributes: ["name"],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
+      const { sort } = req.query;
 
-      res.status(200).json({
-        message: `Search Submissions by Username: ${username}`,
-        data: submissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
+      let order = [["createdAt", "DESC"]]; // Default sort: newest first
 
-  // Search submission by user ID
-  searchSubmissionsByUserId: async (req, res) => {
-    const { user_id } = req.query;
-    try {
-      const submissions = await submission.findAll({
-        where: { user_id },
-        include: [
-          {
-            model: User,
-            attributes: ["username"],
-          },
-          {
-            model: program,
-            attributes: ["name"],
-          },
-        ],
-        order: [["createdAt", "DESC"]],
-      });
+      if (sort === "oldest") {
+        order = [["createdAt", "ASC"]]; // Sort oldest first
+      } else if (sort === "newest") {
+        order = [["createdAt", "DESC"]]; // Sort newest first
+      }
 
-      res.status(200).json({
-        message: `Search Submissions by User ID: ${user_id}`,
-        data: submissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  // Sort submissions by oldest (ascending order of createdAt)
-  sortSubmissionsOldest: async (req, res) => {
-    try {
       const submissions = await submission.findAll({
         include: [
           {
@@ -390,39 +264,16 @@ module.exports = {
             attributes: ["name"],
           },
         ],
-        order: [["createdAt", "ASC"]], // Sort by oldest first
+        order,
       });
+
+      const message =
+        sort === "oldest"
+          ? "Submissions sorted by oldest first"
+          : "Submissions sorted by newest first";
 
       res.status(200).json({
-        message: "Submissions sorted by oldest first",
-        data: submissions,
-      });
-    } catch (error) {
-      res.status(500).json({
-        message: `Internal Server Error: ${error.message}`,
-      });
-    }
-  },
-
-  // Sort submissions by newest (descending order of createdAt)
-  sortSubmissionsNewest: async (req, res) => {
-    try {
-      const submissions = await submission.findAll({
-        include: [
-          {
-            model: User,
-            attributes: ["username"],
-          },
-          {
-            model: program,
-            attributes: ["name"],
-          },
-        ],
-        order: [["createdAt", "DESC"]], // Sort by newest first
-      });
-
-      res.status(200).json({
-        message: "Submissions sorted by newest first",
+        message,
         data: submissions,
       });
     } catch (error) {

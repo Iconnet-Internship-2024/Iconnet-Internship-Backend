@@ -21,7 +21,7 @@ Pastikan telah menginstal [Node.js](https://nodejs.org/), [npm (Node Package Man
 
 1. Buat file pada folder proyek dengan nama ```.env```. Kemudian copy isi file ```.example.env``` dan paste ke dalam file ```.env```. Selanjutnya atur konfigurasi dalam file ```.env``` sesuai credentials masing masing.
 2. Jalankan perintah ```npx sequelize db:migrate``` untuk migrasi database.
-3. Jalankan perintah ```npx sequelize seed:all``` untuk seeding database.
+3. Jalankan perintah ```npx sequelize db:seed:all``` untuk seeding database.
 4. Untuk menjalankan aplikasi, gunakan perintah: ```npm run dev```
 5. Lakukan hal-hal lain sesuai kebutuhan.
 

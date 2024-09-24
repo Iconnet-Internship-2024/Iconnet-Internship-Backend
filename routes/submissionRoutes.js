@@ -11,6 +11,14 @@ router.get("/:id", submissionController.getSubmissionById);
 router.get("/", authorize([3]), submissionController.getAllSubmissions);
 
 router.post(
+  "/add/im",
+  upload.fields([
+    { name: "cover_letter", maxCount: 1 },
+    { name: "proposal", maxCount: 1 },
+  ]),
+  submissionController.addSubmissionIm
+);
+router.post(
   "/",
   upload.fields([
     { name: "cover_letter", maxCount: 1 },
@@ -25,6 +33,11 @@ router.put(
   submissionController.updateSubmissionStatus
 );
 
+router.delete(
+  "/hardDelete/im/:id",
+  authorize([3]),
+  submissionController.hardDeleteSubmissionIm
+);
 router.delete(
   "/softDelete/:id",
   authorize([3]),
